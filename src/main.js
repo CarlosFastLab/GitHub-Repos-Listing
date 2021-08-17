@@ -4,7 +4,7 @@ class App {
     // Construtor
     constructor() {
         // Lista de repositórios
-        this.repostorios = [];
+        this.repostorios = JSON.parse(localStorage.getItem('repos')) || [];
 
         // Form
         this.formulario = document.querySelector('form');
@@ -14,11 +14,23 @@ class App {
 
         // Método para registrar eventos do form
         this.registrarEventos();
+
+        this.renderizarTela();
     }
 
     // Apenas registra o evt, passando o evento como argumento sendo utilizado no método adicionarRepositorio()
     registrarEventos() {
         this.formulario.onsubmit = evento => this.adicionarRepositorio(evento);
+    }
+
+    // Salvando dados no localStorage
+    salvarStorage() {
+        localStorage.setItem('repos', JSON.stringify(this.repostorios));
+    }
+
+    // Removendo repositórios da lista e atualizando o localStorage
+    removeRepo(el) {
+
     }
 
     // Função asíncrona pois vai fazer requisição http (retorno com tempo de resposta e execução variáveis)
@@ -34,21 +46,62 @@ class App {
             return; // return sempre sai da função
         }
 
-        let response = await api.get(`/repos/${input}`);
+        // Ativa o carregamento
+        this.apresentarBuscando();
 
-        // Destructuring das propriedades que recebemos no respose
-        let { name, description, html_url, owner: { avatar_url } } = response.data;
+        try {
+            let response = await api.get(`/repos/${input}`);
 
-        // Adiciona o repositório na lista
-        this.repostorios.push({
-            nome: name,
-            descricao: description,
-            avatar_url,
-            link: html_url
-        });
+            // Destructuring das propriedades que recebemos no respose
+            let { name, description, html_url, owner: { avatar_url } } = response.data;
 
-        // Renderizar a tela
-        this.renderizarTela();
+            // Adiciona o repositório na lista
+            this.repostorios.push({
+                nome: name,
+                descricao: description,
+                avatar_url,
+                link: html_url
+            });
+
+            this.salvarStorage();
+
+            // Renderizar a tela
+            this.renderizarTela();
+        } catch (erro) {
+            // Limpar buscando
+            this.lista.removeChild(document.querySelector('.list-group-item-warning'));
+
+            // Limpar erro existente
+            let er = this.lista.querySelector('.list-group-item-danger');
+            if (er !== null) {
+                this.lista.removeChild(er);
+            }
+
+            // Cria uma li
+            let li = document.createElement('li')
+            // Setta atributos
+            li.setAttribute('class', 'list-group-item list-group-item-danger');
+            // Cria um textNode pro texto que vai apresentar
+            let txtErro = document.createTextNode(`O repositório ${input} não existe`);
+            // Adiciona o textNode à lista
+            li.appendChild(txtErro);
+            // Adiciona o li com o erro à lista
+            this.lista.appendChild(li);
+        }
+    }
+
+    apresentarBuscando() {
+        let input = this.formulario.querySelector('input[id=repositorio]').value
+        // Cria uma li
+        let li = document.createElement('li')
+        // Setta atributos
+        li.setAttribute('class', 'list-group-item list-group-item-warning');
+        // Cria um textNode pro texto que vai apresentar
+        let txtBuscando = document.createTextNode(`Aguarde, buscando o repositório ${input}...`);
+        // Adiciona o textNode à lista
+        li.appendChild(txtBuscando);
+        // Adiciona o li com o erro à lista
+        this.lista.appendChild(li);
     }
 
     renderizarTela() {
@@ -109,6 +162,16 @@ class App {
 
             // Adicionando foco ao input
             this.formulario.querySelector('input[id=repositorio]').focus();
+
+            // Removendo repositórios do array de repos
+            li.onclick = () => {
+                // Executamos um splice, passando como ponto inicial o index do repo e como quantidade a excluir 1 elemento
+                this.repostorios.splice(this.repostorios.indexOf(repo), 1);
+                // Rerenderizamos a tela após a exclusão
+                this.renderizarTela();
+                // Atualizamos o localStorage
+                this.salvarStorage();
+            }
         });
     }
 }
