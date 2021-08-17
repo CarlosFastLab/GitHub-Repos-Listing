@@ -10,3 +10,13 @@ Initializing the project:
 * Configuring Webpack and Babel;
 * Initial HTML configuration - to be changed as project's implementation changes;
 * CSS configurations - Extra styling.
+
+### Aug, 17th
+* Repos listing is now dynamically filled;
+* Accessing GitHub API to fetch repos;
+* Error handling added (trying to access non-existing repo);
+* Data is being persisted in localStorage;
+* User can remove a repo from the listing.
+
+## TODO
+* Further error handling (trying to add a repo that is already listed).
