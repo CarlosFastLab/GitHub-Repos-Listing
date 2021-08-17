@@ -1,3 +1,5 @@
+import api from './api';
+
 class App {
     // Construtor
     constructor() {
@@ -14,20 +16,35 @@ class App {
         this.registrarEventos();
     }
 
+    // Apenas registra o evt, passando o evento como argumento sendo utilizado no método adicionarRepositorio()
     registrarEventos() {
         this.formulario.onsubmit = evento => this.adicionarRepositorio(evento);
     }
 
-    adicionarRepositorio(evento) {
+    // Função asíncrona pois vai fazer requisição http (retorno com tempo de resposta e execução variáveis)
+    async adicionarRepositorio(evento) {
         // Evita que o formulário recarregue a página
         evento.preventDefault();
 
+        // Recuperar valor do input
+        let input = this.formulario.querySelector('input[id=repositorio]').value;
+
+        // Se input vier vazio, sai da app
+        if (input.length === 0) {
+            return; // return sempre sai da função
+        }
+
+        let response = await api.get(`/repos/${input}`);
+
+        // Destructuring das propriedades que recebemos no respose
+        let { name, description, html_url, owner: { avatar_url } } = response.data;
+
         // Adiciona o repositório na lista
         this.repostorios.push({
-            nome: 'Nerd Fonts',
-            descricao: 'Iconic font aggregator, collection, and patcher',
-            avatar_url: 'https://avatars0.githubusercontent.com/u/8083459?v=4',
-            link: 'https://github.com/ryanoasis/nerd-fonts'
+            nome: name,
+            descricao: description,
+            avatar_url,
+            link: html_url
         });
 
         // Renderizar a tela
